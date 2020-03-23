@@ -1,0 +1,17 @@
+{
+  "name": "pingolier",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "emailjs": "^2.2.0",
+    "ping": "^0.2.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "axlDrago",
+  "license": "ISC"
+}
