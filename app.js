@@ -14,7 +14,7 @@ function Pingolier(){
     this.serverOptions = {
         user: process.env.EMAIL,
         password: process.env.PASS,
-        host: "smtp.yandex.ru",
+        protocol: "smtp.yandex.ru",
         ssl: true
     };
 
@@ -26,44 +26,46 @@ function Pingolier(){
  */
 Pingolier.prototype.ping = function (){
     const _this = this;
-    ping.sys.probe(this.options.host, function(res){
-        if(!res){
-            _this.sendEmail();
-            _this.sendTelegram();
-            _this.err = true;
-            _this.timeOut();
-        } else {
-            console.log('хост доступен: ' + Date('now'));
-            _this.err = false;
-            _this.timeOut();
-        }
+    this.options.host.map((val) => {
+        ping.sys.probe(val.ip, function(res){
+            if(!res){
+                _this.sendEmail(val);
+                _this.sendTelegram(val);
+                _this.err = true;
+                _this.timeOut();
+            } else {
+                console.log('хост доступен: ' + val.name + ' ' + val.ip + Date('now'));
+                _this.err = false;
+                _this.timeOut();
+            }
+        });
     });
 };
 
 /**
  * Отправляем сообщение
  */
-Pingolier.prototype.sendEmail = function () {
+Pingolier.prototype.sendEmail = function (host) {
     let server = email.server.connect({
         user: this.serverOptions.user,
         password: this.serverOptions.password,
-        host: this.serverOptions.host,
+        host: this.serverOptions.protocol,
         ssl: this.serverOptions.ssl
     });
   
     server.send({
-        text:    "Хост недоступен: "  + this.options.host,
+        text:    "Хост недоступен: "  + host.name + " ip: " + host.ip,
         from:    "Pingolier_bot <" + this.serverOptions.user + ">",
         to:      "Me <" + this.serverOptions.user + ">",
-        subject: "Хост недоступен: " + this.options.host
+        subject: "Хост недоступен: " + host.name
     });
 };
 
 /**
  * Отправляем сообщение в телеграм
  */
-Pingolier.prototype.sendTelegram = function(){
-    msg = encodeURI('Хост недоступен: ' + this.options.host);
+Pingolier.prototype.sendTelegram = function(host){
+    msg = encodeURI("Хост недоступен: "  + host.name + " ip: " + host.ip);
 
     http.post(`https://api.telegram.org/bot${process.env.TOKEN}/sendMessage?chat_id=${process.env.GROUP}&parse_mode=html&text=${msg}`, 
         function (error, response, body) {  

@@ -8,7 +8,11 @@
     .env
     EMAIL=емайл с доменом //test@yanex.ru
     PASS=пароль от почты
-    HOST=ip или адрес без порта и без http://
+    HOST=массив объектов ip или адрес без порта и без http://
+            [
+                {name: 'Ping1', ip: '8.8.8.8'},
+                {name: 'Ping2', ip: '8.8.8.8'}
+            ]
     TOKEN=token бота @BotFather
     GROUP=id группового чата
     
