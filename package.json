@@ -1,14 +1,14 @@
 {
   "name": "pingolier",
-  "version": "1.0.1",
+  "version": "1.0.22,
   "description": "",
   "main": "Pingolier.js",
   "dependencies": {
-    "dotenv": "^8.2.0",
-    "emailjs": "^2.2.0",
+    "dotenv": "8.2.0",
+    "emailjs": "2.2.0",
     "fs": "0.0.1-security",
-    "ping": "^0.2.2",
-    "request": "^2.88.2"
+    "ping": "0.2.2",
+    "request": "2.88.2"
   },
   "devDependencies": {},
   "scripts": {

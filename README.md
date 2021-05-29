@@ -1,5 +1,5 @@
 # Pingolier
-Пингует хост и шлет уведомление на email или в телеграмм, если нет хост недоступен
+Пингует хост и шлет уведомление на email или telegram, если нет хост недоступен
 
 ## Start:
 
@@ -8,6 +8,7 @@
     .env
     EMAIL=емайл с доменом //test@yanex.ru
     PASS=пароль от почты
+    SMTP=smtp.server.ru //SMTP сервер
     HOST= [{"name": "Ping1", "ip": "8.8.8.8"},{"name": "Ping2", "ip": "8.8.8.8"}] //массив объектов ip или адрес без порта и без http://
     TOKEN=token бота @BotFather
     GROUP=id группового чата

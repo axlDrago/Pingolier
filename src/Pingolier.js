@@ -12,16 +12,17 @@ function Pingolier() {
         interval: 5 * 60 * 1000, //время повторного пинга, мс
         errInterval: 1 * 60 * 1000, //время повторного пинга при недоступности хоста, мс
         pingConfig: {
-	    extra: ['-i', '2', '-c', '5']
-	}
+	      extra: ['-i', '2', '-c', '5']
+    	}
     };
 
     this.mailOptions = {
         user: process.env.EMAIL,
         password: process.env.PASS,
-        protocol: "smtp.yandex.ru",
+        protocol: process.env.SMTP,
         ssl: true
     };
+
 
     this.err = false;
 };
@@ -38,8 +39,8 @@ Pingolier.prototype.init = function () {
         _this.err = await _this.ping(val);
 
         if (_this.err) {
-	    _this.sendTelegram(val);
-            _this.sendBadLog(val);
+            _this.sender(val);
+            setTimeout(() => _this.checkBadIp(val), _this.options.errInterval);
             return;
         }
 
@@ -60,28 +61,16 @@ Pingolier.prototype.init = function () {
 /**
  * Проверяем недоступный IP повторно
  */
-Pingolier.prototype.sendBadLog = function (val) {
-    this.log(val);
-    //this.sendTelegram(val);
-
-    setTimeout(() => {
-        this.checkBadIp(val);
-    }, this.options.errInterval);
-};
-
-/**
- * Проверяем недоступный IP повторно
- */
 Pingolier.prototype.checkBadIp = async function (val) {
     this.err = await this.ping(val);
 
     if (this.err) {
-        this.sendBadLog(val);
+        setTimeout(() => this.checkBadIp(val), this.options.errInterval);
         return;
     }
 
     if (!this.err) {
-        this.sendTelegram(val, false);
+        this.sender(val, false);
         this.init();
         return;
     }
@@ -91,7 +80,7 @@ Pingolier.prototype.checkBadIp = async function (val) {
  * Логируем
  */
 Pingolier.prototype.log = function (val) {
-    const errMsg = `******************************** \nERROR! ${Date('now')} \n Хост не доступен: ${val.ip} \n`;
+    const errMsg = `******************************** \nERROR! ${Date('now')} \n Хост не доступен: ${val.name} : ${val.ip} \n`;
     fs.appendFileSync(this.options.logFile, errMsg);
 }
 
@@ -105,32 +94,47 @@ Pingolier.prototype.ping = async function (val) {
 /**
  * Отправляем email
  */
-Pingolier.prototype.sendEmail = function (host) {
+Pingolier.prototype.sendEmail = function (host, err) {
+  const msg = err ?
+    `Хост недоступен: ${host.name} ip: ${host.ip}` :
+    `Заработало: ${host.name} ip: ${host.ip}`;
+
     const server = email.server.connect({
-        user: this.mailOptions.user,
-        password: this.mailOptions.password,
-        host: this.mailOptions.protocol,
-        ssl: this.mailOptions.ssl
+          user: this.mailOptions.user,
+          password: this.mailOptions.password,
+          host: this.mailOptions.protocol,
+          ssl: this.mailOptions.ssl
     });
 
     server.send({
-        text: "Хост недоступен: " + host.name + " ip: " + host.ip,
-        from: "Pingolier_bot <" + this.serverOptions.user + ">",
-        to: "Me <" + this.serverOptions.user + ">",
-        subject: "Хост недоступен: " + host.name
+        text: msg,
+        from: "Pingolier_bot <" + this.mailOptions.user + ">",
+        to: "Me <" + this.mailOptions.user + ">",
+        subject: "Pingolier_bot" 
     });
 };
 
 /**
  * Отправляем сообщение в телеграм
  */
-Pingolier.prototype.sendTelegram = function (host, err = true) {
+Pingolier.prototype.sendTelegram = function (host, err) {
     const msg = err ?
         encodeURI("Хост недоступен: " + host.name + " ip: " + host.ip)
         : encodeURI("ЗАРАБОТАЛО!: " + host.name + " ip: " + host.ip);
 
     http.post(`https://api.telegram.org/bot${process.env.TOKEN}/sendMessage?chat_id=${process.env.GROUP}&parse_mode=html&text=${msg}`);
 };
+
+/**
+ * Отправляем сообщения
+ */
+Pingolier.prototype.sender = function(host, err = true) {
+  this.sendTelegram(host, err);
+  this.sendEmail(host, err);
+  if(err) {
+    this.log(host)
+  }
+}
 
 const pingolier = new Pingolier();
 pingolier.init();
